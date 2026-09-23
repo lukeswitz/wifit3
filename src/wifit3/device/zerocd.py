@@ -22,6 +22,7 @@ _EJECT_TAG = 0x77696669                       # "wifi", the CBW tag we echo back
 _SCSI_START_STOP_UNIT = bytes([0x1B, 0, 0, 0, 0x02, 0])  # LoEj=1, Start=0: eject the medium
 _CSW_LEN = 13
 _IO_TIMEOUT_MS = 1000
+_USB_CLASS_MASS_STORAGE = 0x08
 
 _MAX_ATTEMPTS = 3            # per physical port, within the window
 _WINDOW_S = 60.0            # so a stubborn stub can't be ejected in a tight spin
@@ -53,6 +54,8 @@ def _eject_libusb(dev: usb.core.Device) -> bool:
     except (NotImplementedError, usb.core.USBError):
         pass
     intf = dev.get_active_configuration()[(0, 0)]
+    if intf.bInterfaceClass != _USB_CLASS_MASS_STORAGE:
+        return False   # not a storage stub; the VID:PID is a shared generic, don't write to it
     out_ep = usb.util.find_descriptor(
         intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
     in_ep = usb.util.find_descriptor(
