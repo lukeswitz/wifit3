@@ -63,6 +63,7 @@ class _FakeArray:
         self.clients: dict = {}
         self.seeded_m1: list[bytes] = []
         self.stray_beacons: dict = {}
+        self.seeded_beacons: dict = {}
         self.evil_twins: set = set()
 
     def select_iface(self, channel):
@@ -73,6 +74,9 @@ class _FakeArray:
 
     def ignore_stray_beacons(self, bssid, channel) -> None:
         self.stray_beacons[bssid] = channel
+
+    def seed_ap_beacon(self, bssid, beacon) -> None:
+        self.seeded_beacons[bssid] = beacon
 
     def stop_ignoring_stray_beacons(self, bssid) -> None:
         self.stray_beacons.pop(bssid, None)

@@ -121,6 +121,7 @@ class EvilTwinCampaign(Campaign):
                              record_m1=self.array.record_injected_eapol)
         if self.same_bssid:
             self.array.ignore_stray_beacons(self.twin_bssid, self.twin_channel)
+            self.array.seed_ap_beacon(self.twin_bssid, self.twin_beacon)
         else:
             self.array.mark_evil_twin(self.twin_bssid)
         await self.fakeap.start()

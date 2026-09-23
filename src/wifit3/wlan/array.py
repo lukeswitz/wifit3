@@ -257,6 +257,9 @@ class WlanArray:
     def record_injected_eapol(self, frame) -> None:
         self._sink.record_injected_eapol(frame)
 
+    def seed_ap_beacon(self, bssid: str, beacon: bytes) -> None:
+        self._sink.seed_ap_beacon(bssid, beacon)
+
     def mark_evil_twin(self, bssid: str) -> None:
         """Hide this BSSID's AP from get_access_points(include_eviltwin=False): it's our own twin."""
         self._evil_twin_bssids.add(bssid.lower())

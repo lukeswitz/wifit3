@@ -146,6 +146,18 @@ class WlanSink:
         if isinstance(pkt, EapolPacket):
             self._on_eapol_frame(pkt)
 
+    def seed_ap_beacon(self, bssid: str, beacon: bytes) -> None:
+        """Register the beacon for an AP we operate (EvilTwin), whose own beacons the array
+        filters out, so its captures clear the beacon-gated save. beacon_frame only; leaves AP
+        metadata untouched."""
+        ap = self.access_points.get(bssid)
+        if ap is None or not beacon or ap.last_beacon_frame:
+            return
+        ap.last_beacon_frame = beacon
+        for hs in ap.handshakes.values():
+            if not hs.beacon_frame:
+                hs.beacon_frame = beacon
+
     # ----- typed handlers ----------------------------------------------------
 
     def _on_beacon_frame(self, pkt: Packet, card_id: str, channel_hint: int) -> bool:
