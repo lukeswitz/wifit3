@@ -266,8 +266,8 @@ class WlanSink:
         if rsn_ie:
             ap.rsn_ie = rsn_ie
 
-        # Stash the latest beacon and back-fill handshakes missing one.
-        if frame_type == "beacon":
+        # Stash the latest beacon/probe-resp and back-fill handshakes missing one.
+        if frame_type in ("beacon", "probe_resp"):
             raw_beacon = pkt.raw
             if raw_beacon:
                 ap.last_beacon_frame = raw_beacon
