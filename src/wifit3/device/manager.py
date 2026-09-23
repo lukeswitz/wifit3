@@ -139,7 +139,11 @@ def supported_ids() -> dict[VidPid, Claim]:
         if fam is not None and dir_name != winners[fam.key]:
             continue  # a DKMS family's losing package
         key = fam.key if fam is not None else dir_name
-        mod = importlib.import_module(mod_info.name)
+        try:
+            mod = importlib.import_module(mod_info.name)
+        except Exception:
+            logger.warning("chip package %s failed to import; skipping", mod_info.name, exc_info=True)
+            continue
         for entry in getattr(mod, "SUPPORTED_IDS", None) or ():
             slot = (entry.vid, entry.pid)
             shared = _VIDPID_FAMILIES.get(slot)
@@ -163,7 +167,11 @@ def zerocd_ids() -> frozenset[VidPid]:
     for mod_info in pkgutil.iter_modules(chips_pkg.__path__, chips_pkg.__name__ + "."):
         if not mod_info.ispkg:
             continue
-        mod = importlib.import_module(mod_info.name)
+        try:
+            mod = importlib.import_module(mod_info.name)
+        except Exception:
+            logger.warning("chip package %s failed to import; skipping", mod_info.name, exc_info=True)
+            continue
         for entry in getattr(mod, "ZEROCD_IDS", None) or ():
             ids.add((entry[0], entry[1]))
     return frozenset(ids)
