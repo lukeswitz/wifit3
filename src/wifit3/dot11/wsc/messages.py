@@ -455,7 +455,7 @@ def parse_rx_frame(frame: bytes) -> Optional[ParsedEap]:
         attrs_end = len(frame)
     raw_attrs = frame[attrs_start:attrs_end]
     attrs = parse_tlvs(raw_attrs)
-    msg_type = attrs.get(ATTR_MSG_TYPE, b"\x00")[0]
+    msg_type = (attrs.get(ATTR_MSG_TYPE) or b"\x00")[0]
     return ParsedEap(
         eap_code=code, eap_id=eap_id, eap_type=eap_type,
         wsc_opcode=opcode, wsc_msg_type=msg_type, attrs=attrs, raw_wsc_attrs=raw_attrs,
