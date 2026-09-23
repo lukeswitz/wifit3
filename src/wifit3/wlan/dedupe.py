@@ -6,11 +6,14 @@ that lands within ``window`` seconds, so each transmission surfaces exactly once
 cards caught it. What one card's antenna misses another often catches, so the merged stream is
 strictly richer than any single card.
 
-The key is FCS- and driver-independent: frame-control + addr1/2/3 + seq_ctrl (the MPDU header,
-bytes ``[0:2] + [4:24]``). The same transmission heard by two cards carries identical addresses and
-sequence number, so it collapses to one. A retransmission flips the Retry bit inside frame-control
-and a fresh frame steps seq_ctrl, so neither is wrongly merged. Keys live only for ``window``
-seconds, so a much-later frame that reuses a sequence number is never suppressed.
+The key is frame-control + addr1/2/3 + seq_ctrl + body (the whole MPDU except Duration/ID, bytes
+``[:2] + [4:]``). The same transmission heard by two cards carries identical bytes (FCS is already
+stripped by the RX decoders), so it collapses to one. A retransmission flips the Retry bit inside
+frame-control and a fresh frame steps seq_ctrl, so neither is wrongly merged. The body is part of the
+key so two different frames that share a header (a real EAPOL message vs. an injected frame forged
+with its predicted sequence number) never collapse, which would otherwise drop the real one. Keys
+live only for ``window`` seconds, so a much-later frame that reuses a sequence number is never
+suppressed.
 
 Promoted from ``scripts/cross_streams.py`` and generalized from two fixed int-indexed sources to a
 dynamic set of string-keyed sources (a card id per source), so cards can be added and dropped at
@@ -57,11 +60,15 @@ class StreamMerger:
 
     @staticmethod
     def key(raw: bytes) -> bytes:
-        """FC + addr1/2/3 + seq_ctrl. A control frame short of a full header (should not reach here,
-        the parser drops them) falls back to its whole buffer so it still dedups sanely."""
+        """FC + addr1/2/3 + seq_ctrl + body; only Duration/ID (bytes 2:4, rewritten per-receiver) is
+        excluded. Including the body is what keeps two DIFFERENT frames that share a header (e.g. a
+        real EAPOL message vs. an injected frame with a spoofed sequence number) from collapsing so
+        the real one is dropped. FCS is already stripped by the RX decoders, so the same on-air
+        transmission still keys identically across cards. A frame short of a full header falls back to
+        its whole buffer."""
         raw = bytes(raw)
         if len(raw) >= 24:
-            return raw[0:2] + raw[4:24]
+            return raw[:2] + raw[4:]
         return raw
 
     def submit_detailed(self, src: str, raw: bytes, now: float) -> tuple[bool, bool]:
